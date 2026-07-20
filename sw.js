@@ -1,5 +1,5 @@
-const CACHE = "moy-ritm-v2";
-const ASSETS = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+const CACHE = "moy-ritm-v3";
+const ASSETS = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "icons/sun-192.png", "icons/sun-512.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));

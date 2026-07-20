@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f2ec">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Настроение">
+  <title>Мой ритм — трекер настроения</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Личный трекер</p>
+        <h1>Мой ритм</h1>
+      </div>
+      <button class="icon-button" id="themeButton" type="button" aria-label="Сменить тему">☾</button>
+    </header>
+
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab is-active" type="button" data-tab="entry">Запись</button>
+      <button class="tab" type="button" data-tab="insights">Циклы</button>
+      <button class="tab" type="button" data-tab="journal">Журнал</button>
+      <button class="tab" type="button" data-tab="data">Данные</button>
+    </nav>
+
+    <main>
+      <section class="panel is-active" id="entryPanel" data-panel="entry">
+        <form id="entryForm">
+          <input type="hidden" id="editingId">
+
+          <div class="date-row">
+            <label>
+              <span>Дата</span>
+              <input id="entryDate" type="date" required>
+            </label>
+            <label>
+              <span>Время</span>
+              <input id="entryTime" type="time" required>
+            </label>
+          </div>
+
+          <section class="question-block mood-block">
+            <div class="section-heading">
+              <h2>Как ты сейчас?</h2>
+              <span class="required-note">обязательно</span>
+            </div>
+            <div class="mood-grid" id="moodChoices" role="radiogroup" aria-label="Настроение"></div>
+            <p class="field-error" id="moodError" hidden>Выбери настроение</p>
+          </section>
+
+          <section class="question-block">
+            <div class="section-heading">
+              <h2>Погода</h2>
+              <span>можно несколько</span>
+            </div>
+            <div class="choice-grid" id="weatherChoices"></div>
+          </section>
+
+          <section class="question-block">
+            <div class="section-heading">
+              <h2>Чем занималась</h2>
+              <span>можно несколько</span>
+            </div>
+            <div class="choice-grid" id="activityChoices"></div>
+          </section>
+
+          <section class="question-block">
+            <div class="section-heading">
+              <h2>Еда</h2>
+              <span>можно несколько</span>
+            </div>
+            <div class="choice-grid" id="foodChoices"></div>
+          </section>
+
+          <section class="question-block">
+            <div class="section-heading"><h2>Как спала?</h2></div>
+            <div class="scale-grid" id="sleepChoices" role="radiogroup" aria-label="Качество сна"></div>
+          </section>
+
+          <section class="question-block compact-fields">
+            <label>
+              <span class="label-title">День цикла</span>
+              <span class="label-hint">оставь пустым, если не отслеживаешь</span>
+              <input id="cycleDay" type="number" inputmode="numeric" min="1" max="99" placeholder="Например, 12">
+            </label>
+          </section>
+
+          <section class="question-block">
+            <div class="section-heading">
+              <h2>Эмоции</h2>
+              <span>можно несколько</span>
+            </div>
+            <div class="choice-grid" id="emotionChoices"></div>
+          </section>
+
+          <section class="question-block compact-fields">
+            <label>
+              <span class="label-title">Заметка</span>
+              <span class="label-hint">что ещё могло повлиять?</span>
+              <textarea id="note" rows="3" maxlength="500" placeholder="Необязательно"></textarea>
+            </label>
+          </section>
+
+          <div class="form-actions">
+            <button class="primary-button" id="saveButton" type="submit">Сохранить запись</button>
+            <button class="secondary-button" id="cancelEditButton" type="button" hidden>Отменить редактирование</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel" id="insightsPanel" data-panel="insights">
+        <div class="insights-header">
+          <div>
+            <p class="eyebrow">Закономерности</p>
+            <h2>Что влияет на настроение</h2>
+          </div>
+          <select id="insightRange" aria-label="Период аналитики">
+            <option value="30">30 дней</option>
+            <option value="90">90 дней</option>
+            <option value="180">6 месяцев</option>
+            <option value="all">Всё время</option>
+          </select>
+        </div>
+
+        <div id="insightsEmpty" class="empty-state" hidden>
+          <div class="empty-icon">◌</div>
+          <h3>Циклы проявятся со временем</h3>
+          <p>Добавь хотя бы 3 записи — и здесь появятся графики и возможные связи.</p>
+        </div>
+
+        <div id="insightsContent">
+          <div class="stats-grid">
+            <article class="stat-card"><span>Среднее настроение</span><strong id="averageMood">—</strong><small>из 5</small></article>
+            <article class="stat-card"><span>Записей</span><strong id="entryCount">0</strong><small id="daysTracked">0 дней</small></article>
+            <article class="stat-card"><span>Самый частый фон</span><strong id="topEmotion">—</strong><small>эмоция</small></article>
+          </div>
+
+          <section class="chart-section">
+            <div class="section-heading">
+              <h3>Динамика настроения</h3>
+              <span>среднее за день</span>
+            </div>
+            <div class="chart-wrap">
+              <svg id="trendChart" viewBox="0 0 720 260" role="img" aria-label="График динамики настроения"></svg>
+            </div>
+          </section>
+
+          <section class="chart-section">
+            <div class="section-heading">
+              <h3>Возможные факторы</h3>
+              <span>сравнение с твоим средним</span>
+            </div>
+            <p class="analysis-note">Это наблюдаемые связи, а не доказанная причина. Чем больше записей, тем надёжнее картина.</p>
+            <div id="factorList" class="factor-list"></div>
+          </section>
+
+          <section class="chart-section">
+            <div class="section-heading">
+              <h3>Настроение по дню цикла</h3>
+              <span id="cycleCoverage">нет данных</span>
+            </div>
+            <div class="chart-wrap cycle-wrap">
+              <svg id="cycleChart" viewBox="0 0 720 260" role="img" aria-label="Среднее настроение по дню цикла"></svg>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="panel" id="journalPanel" data-panel="journal">
+        <div class="journal-header">
+          <div>
+            <p class="eyebrow">История</p>
+            <h2>Журнал</h2>
+          </div>
+          <select id="journalFilter" aria-label="Фильтр записей">
+            <option value="all">Все записи</option>
+            <option value="7">7 дней</option>
+            <option value="30">30 дней</option>
+          </select>
+        </div>
+        <div id="journalList" class="journal-list"></div>
+        <div id="journalEmpty" class="empty-state">
+          <div class="empty-icon">✦</div>
+          <h3>Здесь появятся твои записи</h3>
+          <p>Первая займёт меньше минуты.</p>
+          <button class="secondary-button" type="button" data-go-entry>Добавить запись</button>
+        </div>
+      </section>
+
+      <section class="panel" id="dataPanel" data-panel="data">
+        <div class="data-intro">
+          <p class="eyebrow">Приватность и перенос</p>
+          <h2>Твои данные принадлежат тебе</h2>
+          <p>Записи хранятся только в этом браузере. Экспортируй копию, чтобы перенести их на другой телефон или ноутбук.</p>
+        </div>
+
+        <section class="data-card">
+          <div>
+            <h3>Резервная копия</h3>
+            <p>JSON сохраняет всё и подходит для восстановления. CSV удобно открыть в таблицах.</p>
+          </div>
+          <div class="button-row">
+            <button class="secondary-button" id="exportJsonButton" type="button">Скачать JSON</button>
+            <button class="secondary-button" id="exportCsvButton" type="button">Скачать CSV</button>
+          </div>
+        </section>
+
+        <section class="data-card">
+          <div>
+            <h3>Импортировать записи</h3>
+            <p>Можно объединить резервную копию с записями на этом устройстве. Дубликаты не создадутся.</p>
+          </div>
+          <label class="file-button">
+            Выбрать JSON
+            <input id="importInput" type="file" accept="application/json,.json">
+          </label>
+        </section>
+
+        <section class="data-card install-card">
+          <div>
+            <h3>Добавить на iPhone</h3>
+            <p>Открой опубликованную ссылку в Safari → нажми «Поделиться» → «На экран “Домой”».</p>
+          </div>
+        </section>
+
+        <section class="danger-zone">
+          <div>
+            <h3>Удалить все данные</h3>
+            <p>Это действие нельзя отменить без резервной копии.</p>
+          </div>
+          <button class="danger-button" id="clearDataButton" type="button">Удалить</button>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="confirmDialog">
+    <form method="dialog">
+      <h2 id="confirmTitle">Подтвердить</h2>
+      <p id="confirmText"></p>
+      <div class="dialog-actions">
+        <button class="secondary-button" value="cancel">Отмена</button>
+        <button class="danger-button" id="confirmAction" value="confirm">Удалить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
